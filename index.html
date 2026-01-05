@@ -1,0 +1,3334 @@
+
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+  <title>Prompt2Poster — Guided Flow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Roboto:wght@400;700&family=Arial:wght@400;700&family=Helvetica:wght@400;700&family=Open+Sans:wght@400;600&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/3.6.3/fabric.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
+<style>
+    :root { 
+      /* Dark creative tool theme from prompt-poster-pro-main */
+      --background: hsl(222 47% 6%);
+      --foreground: hsl(210 40% 98%);
+      --surface: hsl(222 47% 8%);
+      --surface-foreground: hsl(210 40% 98%);
+      
+      /* Electric teal accent */
+      --primary: hsl(174 72% 56%);
+      --primary-foreground: hsl(222 47% 6%);
+      
+      /* Secondary orange */
+      --secondary: hsl(222 30% 14%);
+      --secondary-foreground: hsl(210 40% 98%);
+      
+      /* Muted colors */
+      --muted: hsl(222 30% 12%);
+      --muted-foreground: hsl(215 20% 55%);
+      
+      /* Border and input */
+      --border: hsl(222 30% 16%);
+      --input: hsl(222 30% 16%);
+      
+      /* Gradients and shadows */
+      --gradient-primary: linear-gradient(135deg, hsl(174 72% 56%), hsl(190 80% 45%));
+      --gradient-dark: linear-gradient(180deg, hsl(222 47% 8%), hsl(222 47% 4%));
+      --gradient-card: linear-gradient(135deg, hsl(222 30% 12% / 0.8), hsl(222 30% 8% / 0.6));
+      --gradient-glow: radial-gradient(ellipse at center, hsl(174 72% 56% / 0.15), transparent 70%);
+      --shadow-glow: 0 0 60px hsl(174 72% 56% / 0.2);
+      --shadow-card: 0 8px 32px hsl(222 47% 2% / 0.4);
+      --shadow-elevated: 0 20px 60px hsl(222 47% 2% / 0.6);
+      
+      /* Legacy compatibility */
+      --text: var(--foreground);
+      --text-muted: var(--muted-foreground);
+      --card: var(--surface);
+      --shadow: var(--shadow-card);
+    }
+    * { box-sizing:border-box; }
+    body { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: hsl(222 47% 6%);
+      color: hsl(210 40% 98%);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    header { 
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center; 
+      padding:16px 24px; 
+      border-bottom:1px solid var(--border); 
+      background:linear-gradient(135deg, hsl(222 47% 8%) 0%, hsl(222 30% 14%) 50%, hsl(222 47% 8%) 100%);
+      box-shadow:var(--shadow-elevated);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand { 
+      font-weight:700; 
+      font-size: 20px;
+      letter-spacing:-0.3px;
+      color: var(--primary-foreground);
+    }
+    .brand .tagline {
+      font-size:12px;
+      font-weight: 500;
+      color: var(--muted-foreground);
+    }
+    .screen { display:none; max-width:1100px; margin:20px auto; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; box-shadow:var(--shadow-card); }
+    .screen.active { display:block; }
+    .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+    input, textarea, select, button { font-family:inherit; }
+    
+    input[type="email"],
+    input[type="password"],
+    input[type="text"],
+    textarea {
+      background: hsl(222 47% 6%);
+      border: 1px solid hsl(222 30% 16%);
+      color: hsl(210 40% 98%);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    input[type="email"]::placeholder,
+    input[type="password"]::placeholder,
+    input[type="text"]::placeholder,
+    textarea::placeholder {
+      color: hsl(215 20% 65%);
+    }
+    
+    select {
+      background: hsl(222 47% 6%);
+      border: 1px solid hsl(222 30% 16%);
+      color: hsl(210 40% 98%);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    input[type="file"] {
+      background: hsl(222 30% 12% / 0.8);
+      border: 1px solid hsl(222 30% 16%);
+      color: hsl(210 40% 98%);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+    
+    input[type="file"]:hover {
+      background: hsl(222 30% 14%);
+      border-color: hsl(174 72% 56%);
+    }
+    button { 
+      border-radius:8px; 
+      border:none; 
+      padding:12px 20px; 
+      font-weight:600; 
+      cursor:pointer; 
+      transition:all 0.2s ease;
+      font-size:14px;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .primary { 
+      background:var(--primary); 
+      color:var(--primary-foreground); 
+      border:1px solid var(--primary);
+    }
+    .primary:hover { 
+      background:hsl(174 72% 60%); 
+      transform: translateY(-1px);
+      box-shadow:0 4px 12px hsl(174 72% 56% / 0.3);
+    }
+    .secondary { 
+      background:var(--secondary); 
+      color:var(--secondary-foreground); 
+      border:1px solid var(--secondary);
+    }
+    .secondary:hover { 
+      background:hsl(222 30% 20%); 
+      transform: translateY(-1px);
+      box-shadow:0 4px 12px hsl(222 30% 14% / 0.3);
+    }
+    .accent { 
+      background:var(--accent); 
+      color:var(--accent-foreground); 
+      border:1px solid var(--accent);
+    }
+    .accent:hover { 
+      background:hsl(174 72% 60%); 
+      transform: translateY(-1px);
+      box-shadow:0 4px 12px hsl(174 72% 56% / 0.3);
+    }
+    .ghost {
+      background: hsl(222 30% 12% / 0.8);
+      border: 1px solid hsl(222 30% 16%);
+      color: hsl(210 40% 98%);
+    }
+    .ghost:hover {
+      background: hsl(222 30% 14%);
+      border-color: hsl(174 72% 56%);
+      transform: translateY(-1px);
+      box-shadow:0 4px 12px hsl(222 30% 14% / 0.3);
+    }
+    .badge { 
+      background:var(--primary); 
+      color:var(--primary-foreground); 
+      padding:6px 12px; 
+      border-radius:20px; 
+      font-size:12px;
+      font-weight: 500;
+    }
+    .stepper { display:flex; gap:12px; margin-bottom:16px; align-items:center; flex-wrap:wrap; }
+    .pill { padding:8px 12px; border-radius:999px; border:1px solid var(--border); background:var(--surface); font-size:13px; }
+    .pill.active { background:var(--primary); border-color:var(--primary); color:var(--primary-foreground); }
+    .muted { color:var(--muted-foreground); font-size:14px; }
+    .loader { height:6px; border-radius:999px; background:var(--gradient-primary); background-size:200% 100%; animation:load 1.4s linear infinite; }
+    @keyframes load { to { background-position:-200% 0; } }
+    /* Professional Editor Layout */
+    /* ===============================
+   PROFESSIONAL FABRIC EDITOR FIX
+   =============================== */
+
+.editor-layout {
+  display: flex;
+  height: 90vh;
+  min-height: 700px;
+  gap: 20px;
+}
+
+.left-sidebar {
+  width: 320px;
+  background: hsl(222 47% 8%);
+  border: 1px solid hsl(222 30% 16%);
+  border-radius: 12px;
+  padding: 20px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* ✅ CANVAS CONTAINER — NO SCALING */
+.canvas-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(222 47% 8%);
+  border: 1px solid hsl(222 30% 16%);
+  border-radius: 12px;
+  padding: 20px;
+  overflow: auto; /* IMPORTANT */
+  position: relative;
+  cursor: default;
+}
+
+/* ✅ FABRIC CANVAS — PIXEL PERFECT */
+.canvas-container canvas {
+  border: none;
+  border-radius: 8px;
+  background: hsl(222 47% 6%);
+  box-shadow: 0 8px 24px hsl(222 47% 2% / 0.6);
+}
+
+/* RIGHT SIDEBAR (optional) */
+.right-sidebar {
+  width: 280px;
+  background: hsl(222 47% 8%);
+  border: 1px solid hsl(222 30% 16%);
+  border-radius: 12px;
+  padding: 20px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.right-sidebar input[type="email"],
+.right-sidebar input[type="password"] {
+  background: hsl(222 47% 6%);
+  border: 1px solid hsl(222 30% 16%);
+  color: hsl(210 40% 98%);
+}
+
+.right-sidebar button.ghost {
+  background: hsl(222 30% 12% / 0.8);
+  border: 1px solid hsl(222 30% 16%);
+  color: hsl(210 40% 98%);
+}
+
+.control-section h4,
+.canvas-info h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.changes-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.change-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.change-item:last-child {
+  border-bottom: none;
+}
+
+.change-time {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.change-desc {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.info-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12px;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.design-tips h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tips-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tip-item {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px;
+  background: var(--background);
+  border-radius: 6px;
+  border-left: 3px solid var(--primary);
+}
+
+.tip-item strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.info-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.info-value {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ratio-controls {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.ratio-controls h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ratio-controls select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.control-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background: var(--background);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.slider-control {
+  margin-bottom: 12px;
+}
+
+.slider-control label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.slider-control input[type="range"] {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.slider-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+}
+
+.slider-control input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  border: none;
+}
+
+.logo-options {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.logo-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  transition: all 0.2s ease;
+}
+
+.logo-option:hover {
+  border-color: var(--primary);
+  background: var(--muted);
+}
+
+.logo-option input[type="radio"] {
+  accent-color: var(--primary);
+}
+
+.logo-option input[type="radio"]:checked + span {
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.logo-option input[type="radio"]:checked ~ .logo-option {
+  border-color: var(--primary);
+  background: var(--muted);
+}
+
+.control-section {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.control-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+    
+    .control-section h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: hsl(210 40% 98%);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .control-btn {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid hsl(222 30% 16%);
+      border-radius: 8px;
+      background: hsl(222 30% 12% / 0.8);
+      color: hsl(210 40% 98%);
+      font-weight: 500;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+      font-size: 14px;
+      text-align: left;
+    }
+    
+    .control-btn:hover {
+      background: hsl(222 30% 14%);
+      border-color: hsl(174 72% 56%);
+    }
+    
+    .control-btn.primary {
+      background: var(--blue);
+      color: white;
+      border-color: var(--blue);
+    }
+    
+    .control-btn.primary:hover {
+      background: #004682;
+    }
+    
+    .control-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .color-palette-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .palette-category h5 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .palette-category .color-grid {
+      margin-bottom: 0;
+    }
+    
+    .color-btn {
+      padding: 8px 12px;
+      border: 1px solid hsl(222 30% 16%);
+      border-radius: 6px;
+      background: hsl(222 30% 12% / 0.6);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 12px;
+      font-weight: 500;
+      color: hsl(210 40% 98%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+    }
+    
+    .color-btn:hover {
+      border-color: hsl(174 72% 56%);
+      background: hsl(222 30% 14%);
+    }
+    
+    .color-btn.active {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: white;
+    }
+    
+    .color-btn {
+      height: 40px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      transition: transform 0.1s;
+    }
+    
+    .color-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .slider-control {
+      margin-bottom: 12px;
+    }
+    
+    .slider-control label {
+      display: block;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    
+    .slider-control {
+      margin-bottom: 16px;
+    }
+    
+    .slider-control label {
+      display: block;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    
+    .slider-control input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    
+    .slider-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+    }
+    
+    .slider-control input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+      border: none;
+    }
+    
+    .text-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    
+    .text-controls input[type="color"] {
+      width: 40px;
+      height: 32px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .text-controls .control-btn {
+      flex: 1;
+      margin-bottom: 0;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: hsl(222 47% 8%);
+      border: 1px solid hsl(222 30% 16%);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .canvas-container canvas {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    
+    .right-sidebar {
+      width: 240px;
+      background: hsl(222 47% 8%);
+      border: 1px solid hsl(222 30% 16%);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    /* Override old styles */
+    .editor-shell, .left-panel, .canvas-wrap {
+      display: none !important;
+    }
+    .toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+    .inline-field { display:flex; align-items:center; gap:8px; }
+    .label { font-size:12px; color:#475569; }
+    .hidden { display:none; }
+    .tag { background:#0ea5e914; color:#0369a1; padding:4px 8px; border-radius:999px; font-size:12px; }
+    
+    /* Ensure all interactive elements are clickable */
+    button, input, select, a {
+      pointer-events: auto !important;
+      z-index: auto !important;
+      position: relative !important;
+    }
+    
+    /* Ensure canvas is visible but doesn't cover other elements */
+    .canvas-container { z-index: 1 !important; position: relative !important; }
+    .canvas-wrapper { z-index: 2 !important; position: relative !important; }
+    #mainCanvas { z-index: 3 !important; position: relative !important; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div>Prompt2Poster</div>
+      <div class="tagline">Retail-safe creative flow</div>
+    </div>
+    <div>
+      <span id="userBadge" class="badge">Not signed in</span>
+      <button id="logoutBtn" class="ghost hidden">Logout</button>
+    </div>
+  </header>
+
+  <!-- AUTH -->
+  <div id="screen-auth" class="screen active">
+    <div class="stepper">
+      <div class="pill active">1. Login / Signup</div>
+      <div class="pill">2. Upload</div>
+      <div class="pill">3. Prompt</div>
+      <div class="pill">4. Generate</div>
+      <div class="pill">5. Edit & Export</div>
+    </div>
+    <h2>Access your workspace</h2>
+    <div class="grid">
+      <div>
+        <label class="label">Email</label>
+        <input id="email" type="email" placeholder="you@brand.com">
+      </div>
+      <div>
+        <label class="label">Password</label>
+        <input id="password" type="password" placeholder="••••••••">
+      </div>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="primary" id="loginBtn">Login</button>
+      <button class="ghost" id="signupBtn">Signup</button>
+      <button class="ghost" id="googleBtn">Sign in with Google</button>
+      <button class="ghost" id="skipBtn" style="background: #f59e0b; color: white;">Skip Login (Demo)</button>
+    </div>
+    <div id="authError" class="muted" style="margin-top:8px; color:#b91c1c;"></div>
+    <div class="muted" style="margin-top:4px;">Sessions persist via Firebase Authentication. No fake buttons.</div>
+    </div>
+
+  <!-- UPLOAD -->
+  <div id="screen-upload" class="screen">
+    <div class="stepper">
+      <div class="pill">1. Login</div>
+      <div class="pill active">2. Upload product</div>
+      <div class="pill">3. Prompt</div>
+      <div class="pill">4. Generate</div>
+      <div class="pill">5. Edit</div>
+    </div>
+    <h2>Upload your product image</h2>
+    <p class="muted">Original file is preserved separately from the canvas for background removal and export.</p>
+    <input id="fileInput" type="file" accept="image/*">
+    <div style="margin-top:12px; display:flex; gap:10px;">
+      <button class="primary" id="toPromptBtn" disabled>Continue to prompt</button>
+    </div>
+  </div>
+
+  <!-- PROMPT -->
+  <div id="screen-prompt" class="screen">
+    <div class="stepper">
+      <div class="pill">1. Login</div>
+      <div class="pill">2. Upload</div>
+      <div class="pill active">3. Prompt</div>
+      <div class="pill">4. Generate</div>
+      <div class="pill">5. Edit</div>
+    </div>
+    <h2>Retail Media Creative Generator</h2>
+    
+    <!-- Retail Style Preset Selection -->
+    <div style="margin-bottom: 20px;">
+      <label class="label" style="font-weight: 600; color: hsl(210 40% 98%); margin-bottom: 8px; display: block;">Retail Style Preset</label>
+      <select id="retailPresetSelect" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px;">
+        <option value="tesco_minimal">Tesco Minimal (Default)</option>
+        <option value="tesco_festive">Tesco Festive</option>
+        <option value="tesco_value">Tesco Value Deal</option>
+        <option value="tesco_premium">Tesco Premium</option>
+      </select>
+      <div id="presetExplanation" style="margin-top: 8px; font-size: 12px; color: hsl(215 20% 55%); padding: 8px; background: hsl(222 30% 12% / 0.6); border-radius: 6px; border-left: 3px solid #00539f;">
+        Clean, minimal design focusing on product clarity with white backgrounds and minimal distractions
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+      <label class="label" style="font-weight: 600; color: hsl(210 40% 98%); margin-bottom: 8px; display: block;">Aspect Ratio</label>
+      <select id="ratioPromptSelect" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px;">
+        <option value="1:1">1:1 Square</option>
+        <option value="4:5">4:5 Portrait</option>
+        <option value="9:16">9:16 Instagram Story</option>
+        <option value="16:9">16:9 Banner</option>
+        <option value="3:1">3:1 Wide Banner</option>
+      </select>
+    </div>
+    
+    <textarea id="promptInput" placeholder="Describe your product and campaign focus (e.g., 'Summer drinks promotion', 'Organic food launch', 'Back to school supplies')..." style="min-height: 100px;"></textarea>
+    
+    <div style="margin-top:12px; display:flex; gap:10px;">
+      <button class="primary" id="startGenerateBtn" disabled>Generate Retail Poster</button>
+      <span class="muted">AI will apply Tesco brand guidelines automatically</span>
+    </div>
+  </div>
+
+  <!-- GENERATING -->
+  <div id="screen-generating" class="screen">
+    <div class="stepper">
+      <div class="pill">1. Login</div>
+      <div class="pill">2. Upload</div>
+      <div class="pill">3. Prompt</div>
+      <div class="pill active">4. Generate</div>
+      <div class="pill">5. Edit</div>
+    </div>
+    <h2>Generating base poster</h2>
+    <div class="loader"></div>
+    <p class="muted">Running background removal (Hugging Face) and prompt-led base generation. Editor opens only after both are done.</p>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="screen-editor" class="screen">
+    <div class="stepper">
+      <div class="pill">1. Login</div>
+      <div class="pill">2. Upload</div>
+      <div class="pill">3. Prompt</div>
+      <div class="pill">4. Generate</div>
+      <div class="pill active">5. Edit & Export</div>
+    </div>
+    
+    <!-- Format Selection Bar -->
+    <div class="toolbar">
+      <div class="inline-field">
+        <span class="label">Format</span>
+        <select id="ratioSelect">
+          <option value="1:1">1:1</option>
+          <option value="3:4">3:4</option>
+          <option value="4:5">4:5</option>
+          <option value="9:16">Instagram</option>
+          <option value="16:9">Banner</option>
+        </select>
+      </div>
+      <div class="tag" id="promptEcho"></div>
+    </div>
+    
+    <!-- Professional Editor Layout -->
+    <div class="editor-layout">
+      <!-- Left Sidebar - Controls Panel -->
+      <div class="left-sidebar">
+        <!-- Background Colours Section -->
+        <div class="control-section">
+          <h4>Background Colours</h4>
+          <div class="color-palette-section">
+            <div class="palette-category">
+              <h5>Primary Colors</h5>
+              <div class="color-grid">
+                <button class="color-btn" data-color="#ffffff" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                  <span>White</span>
+                </button>
+                <button class="color-btn" data-color="#000000" style="background: #000000; color: white;">
+                  <span>Black</span>
+                </button>
+                <button class="color-btn" data-color="#374151" style="background: #374151; color: white;">
+                  <span>Dark Grey</span>
+                </button>
+              </div>
+            </div>
+            <div class="palette-category">
+              <h5>Brand Colors</h5>
+              <div class="color-grid">
+                <button class="color-btn" data-color="#e10600" style="background: #e10600; color: white;">
+                  <span>Tesco Red</span>
+                </button>
+                <button class="color-btn" data-color="#00539f" style="background: #00539f; color: white;">
+                  <span>Tesco Blue</span>
+                </button>
+                <button class="color-btn" data-color="#00a650" style="background: #00a650; color: white;">
+                  <span>Tesco Green</span>
+                </button>
+              </div>
+            </div>
+            <div class="palette-category">
+              <h5>Neutral Tones</h5>
+              <div class="color-grid">
+                <button class="color-btn" data-color="#f2f2f2" style="background: #f2f2f2; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Light Grey</span>
+                </button>
+                <button class="color-btn" data-color="#e5e5e5" style="background: #e5e5e5; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Mid Grey</span>
+                </button>
+                <button class="color-btn" data-color="#d1d5db" style="background: #d1d5db; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Stone Grey</span>
+                </button>
+              </div>
+            </div>
+            <div class="palette-category">
+              <h5>Pastel Colors</h5>
+              <div class="color-grid">
+                <button class="color-btn" data-color="#eef3f7" style="background: #eef3f7; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Blue</span>
+                </button>
+                <button class="color-btn" data-color="#eef6f1" style="background: #eef6f1; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Green</span>
+                </button>
+                <button class="color-btn" data-color="#fef3e2" style="background: #fef3e2; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Yellow</span>
+                </button>
+                <button class="color-btn" data-color="#fce7f3" style="background: #fce7f3; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Pink</span>
+                </button>
+                <button class="color-btn" data-color="#f3e8ff" style="background: #f3e8ff; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Purple</span>
+                </button>
+                <button class="color-btn" data-color="#e0f2fe" style="background: #e0f2fe; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Sky Blue</span>
+                </button>
+              </div>
+            </div>
+            <div class="palette-category">
+              <h5>Custom Color</h5>
+              <div class="color-grid">
+                <!-- Main Colors - 15 colors -->
+                <button class="color-btn" data-color="#ffffff" style="background: #ffffff; border: 1px solid #e2e8f0;">
+                  <span>White</span>
+                </button>
+                <button class="color-btn" data-color="#000000" style="background: #000000; color: white;">
+                  <span>Black</span>
+                </button>
+                <button class="color-btn" data-color="#e10600" style="background: #e10600; color: white;">
+                  <span>Red</span>
+                </button>
+                <button class="color-btn" data-color="#00539f" style="background: #00539f; color: white;">
+                  <span>Blue</span>
+                </button>
+                <button class="color-btn" data-color="#00a650" style="background: #00a650; color: white;">
+                  <span>Green</span>
+                </button>
+                <button class="color-btn" data-color="#374151" style="background: #374151; color: white;">
+                  <span>Grey</span>
+                </button>
+                <button class="color-btn" data-color="#f2f2f2" style="background: #f2f2f2; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Light Grey</span>
+                </button>
+                <button class="color-btn" data-color="#e5e5e5" style="background: #e5e5e5; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Mid Grey</span>
+                </button>
+                <button class="color-btn" data-color="#d1d5db" style="background: #d1d5db; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Stone Grey</span>
+                </button>
+                <button class="color-btn" data-color="#eef3f7" style="background: #eef3f7; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Blue</span>
+                </button>
+                <button class="color-btn" data-color="#eef6f1" style="background: #eef6f1; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Green</span>
+                </button>
+                <button class="color-btn" data-color="#fef3e2" style="background: #fef3e2; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Yellow</span>
+                </button>
+                <button class="color-btn" data-color="#fce7f3" style="background: #fce7f3; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Pink</span>
+                </button>
+                <button class="color-btn" data-color="#f3e8ff" style="background: #f3e8ff; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Pale Purple</span>
+                </button>
+                <button class="color-btn" data-color="#e0f2fe" style="background: #e0f2fe; border: 1px solid #e2e8f0; color: #374151;">
+                  <span>Sky Blue</span>
+                </button>
+                <!-- Color Cycle -->
+                <button class="color-btn" data-color="#000000" style="background: linear-gradient(45deg, #ff0000, #00ff00, #0000ff, #ffff00, #ff00ff, #00ffff); color: white; position: relative;">
+                  <span>Custom</span>
+                  <div style="position: absolute; top: -2px; right: -2px; width: 12px; height: 12px; background: white; border: 2px solid #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 6px; height: 6px; background: #e10600; border-radius: 50%;"></div>
+                  </div>
+                </button>
+                <!-- Custom Color Panel -->
+                <div class="custom-color-panel" style="grid-column: span 2; padding: 12px; background: hsl(222 30% 12% / 0.8); border: 1px solid hsl(222 30% 16%); border-radius: 8px; display: none;">
+                  <div style="display: flex; align-items: center; gap: 12px;">
+                    <input type="color" id="customColorPicker" value="#000000" style="width: 48px; height: 48px; border: 2px solid hsl(222 30% 16%); border-radius: 8px; cursor: pointer;">
+                    <div style="flex: 1; display: flex; flex-direction: column; gap: 8px;">
+                      <input type="text" id="customColorHex" value="#000000" placeholder="#000000" style="width: 100%; padding: 10px 12px; border: 1px solid hsl(222 30% 16%); border-radius: 6px; font-size: 14px; font-family: 'Courier New', monospace; font-weight: 500; background: hsl(222 30% 12% / 0.6); color: hsl(210 40% 98%);">
+                      <div style="display: flex; gap: 8px;">
+                        <button class="control-btn" id="applyCustomColor" style="flex: 1; padding: 10px; background: #e10600; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Apply</button>
+                        <button class="control-btn" id="cancelCustomColor" style="flex: 1; padding: 10px; background: hsl(222 30% 14%); color: hsl(210 40% 98%); border: 1px solid hsl(222 30% 16%); border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Logo Section -->
+        <div class="control-section">
+          <h4>Logo</h4>
+          <div class="logo-options">
+            <label class="logo-option">
+              <input type="radio" name="logoType" value="tesco" checked>
+              <span>Tesco Logo</span>
+            </label>
+            <label class="logo-option">
+              <input type="radio" name="logoType" value="custom">
+              <span>Custom Logo</span>
+            </label>
+          </div>
+          <button class="control-btn" id="uploadLogoBtn" disabled>Upload Custom Logo</button>
+          <button class="control-btn" id="removeLogoBgBtn" disabled>Remove Background</button>
+          <input type="file" id="logoFileInput" accept="image/*" style="display: none;">
+        </div>
+        
+        <!-- Shadow Controls Section -->
+        <div class="control-section">
+          <h4>Shadow & Effects</h4>
+          <div class="slider-control">
+            <label>Blur: <span id="shadowBlurValue">20</span>px</label>
+            <input type="range" id="shadowBlur" min="0" max="50" value="20">
+          </div>
+          <div class="slider-control">
+            <label>Opacity: <span id="shadowOpacityValue">35</span>%</label>
+            <input type="range" id="shadowOpacity" min="0" max="100" value="35">
+          </div>
+          <div class="slider-control">
+            <label>Angle: <span id="shadowAngleValue">45</span>°</label>
+            <input type="range" id="shadowAngle" min="0" max="360" value="45">
+          </div>
+          <div class="slider-control">
+            <label>Distance: <span id="shadowDepthValue">20</span>px</label>
+            <input type="range" id="shadowDepth" min="0" max="100" value="20">
+          </div>
+          <button class="control-btn" id="removeShadowBtn">Remove Shadow</button>
+        </div>
+        
+        <!-- 3D Adjustments Section -->
+        <div class="control-section">
+          <h4>3D Adjustments</h4>
+          <div class="slider-control">
+            <label>Tilt X: <span id="tiltXValue">0</span>°</label>
+            <input type="range" id="tiltX" min="-45" max="45" value="0">
+          </div>
+          <div class="slider-control">
+            <label>Tilt Y: <span id="tiltYValue">0</span>°</label>
+            <input type="range" id="tiltY" min="-45" max="45" value="0">
+          </div>
+          <div class="slider-control">
+            <label>Rotation: <span id="depthValue">0</span>°</label>
+            <input type="range" id="depth" min="0" max="360" value="0">
+          </div>
+          <button class="control-btn" id="reset3DBtn">Reset 3D</button>
+        </div>
+        
+        <!-- Text Section -->
+        <div class="control-section">
+          <h4>Text</h4>
+          <div class="slider-control">
+            <label>Font Size: <span id="fontSizeValue">42</span>px</label>
+            <input type="range" id="fontSize" min="12" max="200" value="42">
+          </div>
+          <select id="fontSelect" style="margin-bottom: 8px;">
+            <option>Inter</option>
+            <option>Roboto</option>
+            <option>Arial</option>
+            <option>Helvetica</option>
+            <option>Open Sans</option>
+            <option>Source Sans Pro</option>
+            <option>Times New Roman</option>
+            <option>Georgia</option>
+            <option>Verdana</option>
+            <option>Courier New</option>
+            <option>Comic Sans MS</option>
+            <option>Impact</option>
+            <option>Trebuchet MS</option>
+            <option>Palatino</option>
+            <option>Garamond</option>
+            <option>Bebas Neue</option>
+            <option>Montserrat</option>
+            <option>Lato</option>
+            <option>Playfair Display</option>
+            <option>Oswald</option>
+          </select>
+          <button class="control-btn" id="addTextBtn">Add Text</button>
+          <div class="text-controls">
+            <input type="color" id="fontColor" value="#333333">
+            <button class="control-btn" id="boldBtn">Bold</button>
+            <button class="control-btn" id="italicBtn">Italic</button>
+          </div>
+        </div>
+        
+        <!-- Recent Changes Section -->
+        <div class="control-section">
+          <h4>Recent Changes</h4>
+          <div id="changesList" class="changes-list" style="max-height: 150px; overflow-y: auto; border: 1px solid hsl(222 30% 16%); border-radius: 8px; padding: 12px; background: hsl(222 30% 12% / 0.6);">
+            <div class="change-item">
+              <span class="change-time">Just now</span>
+              <span class="change-desc">Canvas initialized</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Retail Intelligence Panel -->
+        <div class="control-section">
+          <h4>Retail Intelligence</h4>
+          <div id="retailExplanation" style="font-size: 12px; color: hsl(215 20% 55%); padding: 12px; background: hsl(222 30% 12% / 0.6); border-radius: 8px; border: 1px solid hsl(222 30% 16%);">
+            <div style="margin-bottom: 8px;">
+              <strong>Preset:</strong> <span id="explanationPreset">-</span>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <strong>Rules Applied:</strong>
+              <ul style="margin: 4px 0; padding-left: 16px; font-size: 11px;">
+                <li>Clean layouts enforced</li>
+                <li>Product visibility maintained</li>
+                <li>Safe text margins applied</li>
+                <li>Limited color palette</li>
+                <li>Professional retail aesthetics</li>
+              </ul>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <strong>Colors:</strong> <span id="explanationColors">-</span>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <strong>Text Placement:</strong> <span id="explanationPlacement">-</span>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <strong>Compliance:</strong> <span id="explanationCompliance" style="color: #00539f; font-weight: 600;">Tesco Brand Compliant</span>
+            </div>
+            <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+              <strong>Design Rationale:</strong>
+              <div id="explanationRationale" style="margin-top: 4px; font-size: 11px; line-height: 1.4;">
+                -
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Download Section -->
+        <div class="control-section">
+          <h4>Download Poster</h4>
+          <button class="control-btn primary" id="downloadPng">Download PNG</button>
+          <button class="control-btn" id="downloadJpg">Download JPG</button>
+        </div>
+      </div>
+      
+      
+      <!-- Canvas Area - Middle Section -->
+      <div class="canvas-container" style="display: flex; flex-direction: column; height: 100%; flex: 1; margin: 0; padding: 20px; width: 100%;">
+        <div class="canvas-wrapper" style="flex: 1; background: hsl(222 47% 8%); border: 2px solid hsl(222 30% 16%); border-radius: 8px; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 400px; position: relative;">
+          <canvas id="mainCanvas" width="800" height="800" style="border: 1px solid #d1d5db; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 100%; max-height: 100%; position: relative;"></canvas>
+        </div>
+      </div>
+      
+      
+      <!-- Right Sidebar - Info Panel -->
+      <div class="right-sidebar">
+        <div class="canvas-info">
+          <h4>Canvas Info</h4>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Size:</span>
+              <span class="info-value" id="canvasSize">1080×1080</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Ratio:</span>
+              <span class="info-value" id="canvasRatio">1:1</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Objects:</span>
+              <span class="info-value" id="objectCount">0</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Background:</span>
+              <span class="info-value" id="bgColorInfo">White</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Design Tips Section -->
+        <div class="design-tips">
+          <h4>Design Tips</h4>
+          <div class="tips-content">
+            <div class="tip-item">
+              <strong>Color Harmony:</strong> Use brand colors consistently for professional look
+            </div>
+            <div class="tip-item">
+              <strong>Logo Placement:</strong> Position logo prominently but don't overwhelm the design
+            </div>
+            <div class="tip-item">
+              <strong>Text Hierarchy:</strong> Keep headlines large and readable, subtext smaller
+            </div>
+            <div class="tip-item">
+              <strong>White Space:</strong> Leave breathing room around elements for clarity
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+    // Firebase bootstrap (replace with your real config from Firebase console)
+    // Example shape:
+    // const firebaseConfig = {
+    // apiKey: "REPLACE_ME",
+    //   authDomain: "your-project.firebaseapp.com",
+    //   projectId: "your-project",
+    //   storageBucket: "your-project.appspot.com",
+    //   messagingSenderId: "XXXXXXXX",
+    //   appId: "1:XXXXXXXX:web:YYYYYYYY",
+    //   measurementId: "G-XXXXXXX"
+    // };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDsJRzZIgioDM_zxJai4nSqP5IvIcDjeDw",
+      authDomain: "prompt2poster-422e3.firebaseapp.com",
+      projectId: "prompt2poster-422e3",
+      storageBucket: "prompt2poster-422e3.firebasestorage.app",
+      messagingSenderId: "1065332022608",
+      appId: "1:1065332022608:web:1a03df9e2c9dfed9672055"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    console.log("Firebase initialized successfully");
+    console.log("Auth methods available:", auth);
+
+    // State
+    let currentUser = null;
+    let originalFile = null;
+    let removedBgBlob = null;
+    let designData = null;
+    let canvas, logoLayer;
+
+    const ratioSizes = {
+      "1:1": { w:1024, h:1024 },
+      "3:4": { w:768, h:1024 },
+      "4:5": { w:820, h:1024 },
+      "9:16": { w:576, h:1024 },
+      "16:9": { w:1024, h:576 },
+      "3:1": { w:1200, h:400 },
+      "A4": { w:2480, h:3508 }
+    };
+
+    const screens = ["auth","upload","prompt","generating","editor"];
+    const showScreen = (key) => {
+      console.log("showScreen called with:", key);
+      screens.forEach(s => {
+        const screenEl = document.getElementById(`screen-${s}`);
+        if (screenEl) {
+          const shouldBeActive = s===key;
+          screenEl.classList.toggle("active", shouldBeActive);
+          console.log(`Screen ${s}: ${shouldBeActive ? 'active' : 'hidden'}`);
+        } else {
+          console.error(`Screen element not found: screen-${s}`);
+        }
+      });
+    };
+
+    // Auth wiring
+    const authErrorEl = document.getElementById("authError");
+    const showAuthError = (err) => {
+      if(!authErrorEl) return;
+      if(!err) { authErrorEl.textContent = ""; return; }
+      const code = err.code || "";
+      const msg = err.message || String(err);
+      authErrorEl.textContent = `${code}: ${msg}`;
+    };
+
+    // Wait for DOM to be fully loaded before attaching event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("DOM loaded, attaching event listeners");
+      
+      // Firebase authentication state listener
+      auth.onAuthStateChanged((user) => {
+        console.log("Auth state changed:", user ? user.email : "No user");
+        console.log("Current screen before auth change:", document.querySelector('.screen.active')?.id);
+        
+        currentUser = user;
+        const userBadge = document.getElementById("userBadge");
+        const logoutBtn = document.getElementById("logoutBtn");
+        
+        if (user) {
+          // User is signed in
+          console.log("User signed in, showing upload screen");
+          userBadge.textContent = user.email || "User";
+          logoutBtn.classList.remove("hidden");
+          showScreen("upload");
+        } else {
+          // User is signed out
+          console.log("User signed out, showing auth screen");
+          userBadge.textContent = "Not signed in";
+          logoutBtn.classList.add("hidden");
+          showScreen("auth");
+        }
+        
+        console.log("Screen after auth change:", document.querySelector('.screen.active')?.id);
+      }, (error) => {
+        console.error("Auth state listener error:", error);
+        showAuthError(error);
+      });
+
+      // Login button event listener
+      const loginBtn = document.getElementById("loginBtn");
+      if (loginBtn) {
+        loginBtn.onclick = async ()=>{
+          console.log("Login button clicked");
+          showAuthError("");
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          console.log("Attempting login with email:", email);
+          try {
+            const result = await auth.signInWithEmailAndPassword(email, password);
+            console.log("Login successful:", result);
+          } catch(err){
+            console.error("Login failed:", err);
+            showAuthError(err);
+          }
+        };
+        console.log("Login button event listener attached");
+      } else {
+        console.error("Login button not found");
+      }
+
+      // Signup button event listener
+      const signupBtn = document.getElementById("signupBtn");
+      if (signupBtn) {
+        signupBtn.onclick = async ()=>{
+          console.log("Signup button clicked");
+          showAuthError("");
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          try {
+            await auth.createUserWithEmailAndPassword(email, password);
+            console.log("Signup successful");
+          } catch(err){
+            console.error("Signup failed:", err);
+            showAuthError(err);
+          }
+        };
+        console.log("Signup button event listener attached");
+      } else {
+        console.error("Signup button not found");
+      }
+
+      // Google sign-in button event listener
+      const googleBtn = document.getElementById("googleBtn");
+      if (googleBtn) {
+        googleBtn.onclick = async ()=>{
+          console.log("Google sign-in button clicked");
+          showAuthError("");
+          
+          try {
+            // Check if Firebase Auth is properly initialized
+            if (!auth) {
+              throw new Error("Firebase Auth not initialized");
+            }
+            
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ 
+              prompt: "select_account",
+              access_type: 'offline'
+            });
+            
+            // Add scopes for better user info
+            provider.addScope('email');
+            provider.addScope('profile');
+            
+            console.log("Attempting Google sign-in with popup...");
+            const result = await auth.signInWithPopup(provider);
+            console.log("Google sign-in successful:", result.user.email);
+            
+          } catch(err){
+            console.error("Google sign-in failed:", err);
+            console.error("Error code:", err.code);
+            console.error("Error message:", err.message);
+            
+            // Handle specific error cases
+            let errorMessage = "Google sign-in failed";
+            if (err.code === 'auth/popup-blocked') {
+              errorMessage = "Popup was blocked. Please allow popups and try again.";
+            } else if (err.code === 'auth/popup-closed-by-user') {
+              errorMessage = "Sign-in popup was closed before completion.";
+            } else if (err.code === 'auth/cancelled-popup-request') {
+              errorMessage = "Sign-in was cancelled.";
+            } else if (err.code === 'auth/network-request-failed') {
+              errorMessage = "Network error. Please check your connection.";
+            } else if (err.code === 'auth/auth-domain-config-required') {
+              errorMessage = "Firebase auth domain configuration issue.";
+            } else if (err.message) {
+              errorMessage = err.message;
+            }
+            
+            showAuthError(errorMessage);
+            
+            // If popup is blocked, try redirect method
+            if(err.code === "auth/popup-blocked") {
+              try {
+                console.log("Trying redirect method...");
+                await auth.signInWithRedirect(provider);
+              } catch(redirectErr) {
+                console.error("Redirect method also failed:", redirectErr);
+                showAuthError("Both popup and redirect methods failed. Please check your browser settings.");
+              }
+            }
+          }
+        };
+        console.log("Google sign-in button event listener attached");
+      } else {
+        console.error("Google sign-in button not found");
+      }
+
+      // Skip login button event listener (for demo/testing)
+      const skipBtn = document.getElementById("skipBtn");
+      console.log("Skip button element found:", skipBtn);
+      if (skipBtn) {
+        skipBtn.onclick = ()=>{
+          console.log("Skip login button clicked");
+          alert("Skip login clicked!"); // Debug alert
+          showAuthError("");
+          // Mock a user object for demo purposes
+          currentUser = { email: "demo@example.com", uid: "demo-user" };
+          const userBadge = document.getElementById("userBadge");
+          const logoutBtn = document.getElementById("logoutBtn");
+          console.log("userBadge:", userBadge, "logoutBtn:", logoutBtn);
+          if (userBadge) userBadge.textContent = "Demo User";
+          if (logoutBtn) logoutBtn.classList.remove("hidden");
+          console.log("About to show upload screen");
+          showScreen("upload");
+          console.log("Upload screen should be shown now");
+        };
+        console.log("Skip login button event listener attached");
+      } else {
+        console.error("Skip button not found!");
+      }
+
+      // Logout button event listener
+      const logoutBtn = document.getElementById("logoutBtn");
+      if (logoutBtn) {
+        logoutBtn.onclick = ()=>{
+          console.log("Logout button clicked");
+          showAuthError("");
+          auth.signOut();
+        };
+        console.log("Logout button event listener attached");
+      }
+
+      console.log("All auth event listeners attached");
+      
+      // Test: Add global click listener to see if clicks work at all
+      document.addEventListener('click', (e) => {
+        console.log("Global click detected on:", e.target.tagName, e.target.id || e.target.textContent);
+      });
+      
+      // Test: Add click listeners to all buttons to verify they work
+      const allButtons = document.querySelectorAll('button');
+      console.log(`Found ${allButtons.length} buttons on page`);
+      allButtons.forEach((btn, index) => {
+        if (!btn.onclick) {
+          btn.addEventListener('click', () => {
+            console.log(`Button ${index} (${btn.id || btn.textContent}) clicked`);
+          });
+        }
+      });
+    });
+
+    // Upload step
+    document.getElementById("fileInput").addEventListener("change",(e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      originalFile = file;
+      document.getElementById("toPromptBtn").disabled = false;
+    });
+    document.getElementById("toPromptBtn").onclick = ()=>{
+      if(!originalFile) return;
+      showScreen("prompt");
+    };
+
+    // Prompt step
+    const retailPresetSelect = document.getElementById("retailPresetSelect");
+    const presetExplanation = document.getElementById("presetExplanation");
+    
+    // Retail preset explanations
+    const presetExplanations = {
+      "tesco_minimal": "Clean, minimal design focusing on product clarity with white backgrounds and minimal distractions",
+      "tesco_festive": "Warm, inviting design with subtle festive elements while maintaining product focus and clean layout",
+      "tesco_value": "Value-focused design with clean blue tones and emphasis on deals, maintaining professional retail standards",
+      "tesco_premium": "Sophisticated, premium design with elegant gray tones and refined typography for upscale positioning"
+    };
+    
+    // Update explanation when preset changes
+    retailPresetSelect.addEventListener("change", (e) => {
+      presetExplanation.textContent = presetExplanations[e.target.value] || presetExplanations["tesco_minimal"];
+    });
+    
+    document.getElementById("promptInput").addEventListener("input",(e)=>{
+      document.getElementById("startGenerateBtn").disabled = e.target.value.trim().length < 3;
+    });
+    document.getElementById("startGenerateBtn").onclick = ()=>{
+      runPipeline();
+    };
+
+    async function runPipeline(){
+      console.log("🚀 Starting pipeline...");
+      if(!originalFile) {
+        console.error("❌ No original file");
+        return alert("Upload a product first.");
+      }
+      console.log("✅ Original file exists");
+      const prompt = document.getElementById("promptInput").value.trim();
+      if(!prompt) {
+        console.error("❌ No prompt provided");
+        return alert("Add a prompt first.");
+      }
+      console.log("✅ Prompt exists:", prompt);
+      
+      // Get ratio and retail preset BEFORE switching screens
+      const ratioPromptSelect = document.getElementById("ratioPromptSelect");
+      const retailPresetSelect = document.getElementById("retailPresetSelect");
+      const ratio = ratioPromptSelect ? ratioPromptSelect.value : "1:1";
+      const retailPreset = retailPresetSelect ? retailPresetSelect.value : "tesco_minimal";
+      console.log("📐 Using ratio:", ratio);
+      console.log("🎨 Using retail preset:", retailPreset);
+      
+      showScreen("generating");
+      console.log("✅ Showing generating screen");
+      
+      try {
+        // Step 1: Remove background automatically
+        console.log("🔄 Step 1: Starting background removal...");
+        removedBgBlob = await removeBgRequest(originalFile);
+        console.log("✅ Step 1: Background removal complete");
+        
+        // Step 2: Generate base poster design
+        console.log("🔄 Step 2: Starting design generation...");
+        designData = await generateDesign(prompt, ratio, retailPreset);
+        console.log("✅ Step 2: Design generation complete:", designData);
+        
+        // Step 3: Initialize editor with generated content (this also sets background)
+        console.log("🔄 Step 3: Starting editor initialization...");
+        await initEditor();
+        console.log("✅ Step 3: Editor initialization complete");
+        
+        // Step 4: Show editor screen
+        console.log("🔄 Step 4: Showing editor screen...");
+        const promptEcho = document.getElementById("promptEcho");
+        if (promptEcho) promptEcho.textContent = `Prompt: ${prompt}`;
+        showScreen("editor");
+        console.log("✅ Step 4: Editor screen shown");
+        
+        // Step 5: Initialize history for undo/redo
+        console.log("🔄 Step 5: Initializing canvas events...");
+        initializeCanvasEvents();
+        saveHistory();
+        console.log("🎉 Pipeline complete!");
+      } catch(err){
+        console.error("❌ Pipeline failed:", err);
+        alert("Generation failed: "+err);
+        showScreen("prompt");
+      }
+    }
+
+    async function removeBgRequest(file){
+      const fd = new FormData();
+      fd.append("image", file);
+      const res = await fetch("http://localhost:5000/remove-bg",{ method:"POST", body:fd });
+      if(!res.ok) {
+        const errorData = await res.json().catch(() => ({error: res.statusText}));
+        throw new Error(`Background removal failed: ${errorData.error || res.statusText} (${res.status})`);
+      }
+      return await res.blob();
+    }
+
+    async function generateDesign(prompt, ratio, retailPreset = "tesco_minimal"){
+      const fd = new FormData();
+      fd.append("prompt", prompt);
+      fd.append("ratio", ratio);
+      fd.append("retail_preset", retailPreset);
+      const res = await fetch("http://localhost:5000/generate",{ method:"POST", body:fd });
+      if(!res.ok) {
+        const errorData = await res.json().catch(() => ({error: res.statusText}));
+        throw new Error(`Design generation failed: ${errorData.error || res.statusText} (${res.status})`);
+      }
+      return await res.json();
+    }
+
+    // Background color buttons - global handler
+    function setupColorButtons() {
+      // Remove existing listeners to avoid duplicates
+      const colorButtons = document.querySelectorAll('.color-btn');
+      console.log("Found color buttons:", colorButtons.length);
+      
+      colorButtons.forEach((btn, index) => {
+        // Remove old listeners
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        
+        // Add new listener
+        newBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const color = newBtn.dataset.color;
+          console.log(`=== COLOR BUTTON CLICKED ===`);
+          console.log(`Button ${index} clicked:`, color);
+          console.log("Canvas available:", !!canvas);
+          
+          if (canvas) {
+            console.log("Setting canvas background to:", color);
+            
+            // Remove any background image objects first
+            const objects = canvas.getObjects();
+            let removedCount = 0;
+            objects.forEach(obj => {
+              if (obj.isBackgroundImage || (obj.selectable === false && obj.evented === false && obj.left === 0 && obj.top === 0 && obj.type === 'image')) {
+                console.log("Removing background image object");
+                canvas.remove(obj);
+                removedCount++;
+              }
+            });
+            if (removedCount > 0) {
+              console.log(`Removed ${removedCount} background image(s)`);
+            }
+            
+            // Set solid background color - FORCE override
+            canvas.backgroundColor = color || "#ffffff";
+            canvas.renderAll();
+            updateCanvasInfo();
+            addChangeToLog(`Background color changed to ${color}`);
+            
+            // Update active state
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            newBtn.classList.add('active');
+            
+            // Force background update
+            setTimeout(() => {
+              canvas.backgroundColor = color || "#ffffff";
+              canvas.renderAll();
+              console.log("Background color forced to:", canvas.backgroundColor);
+            }, 100);
+            
+          } else {
+            console.warn("Canvas not available yet - will retry");
+            // Retry after a short delay
+            setTimeout(() => {
+              if (canvas) {
+                const objects = canvas.getObjects();
+                objects.forEach(obj => {
+                  if (obj.isBackgroundImage || (obj.selectable === false && obj.evented === false && obj.left === 0 && obj.top === 0 && obj.type === 'image')) {
+                    canvas.remove(obj);
+                  }
+                });
+                canvas.backgroundColor = color || "#ffffff";
+                canvas.renderAll();
+                updateCanvasInfo();
+                addChangeToLog(`Background color changed to ${color}`);
+              }
+            }, 500);
+          }
+        });
+      });
+    }
+    
+    // Setup color buttons when DOM is ready
+    setupColorButtons();
+
+    // Professional Editor Event Handlers - MOVED TO initEditor()
+    
+    // Logo upload and selection
+    const uploadLogoBtn = document.getElementById('uploadLogoBtn');
+    const logoFileInput = document.getElementById('logoFileInput');
+    const logoTypeRadios = document.querySelectorAll('input[name="logoType"]');
+    
+    // Handle logo type selection
+    logoTypeRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const logoType = e.target.value;
+        uploadLogoBtn.disabled = logoType !== 'custom';
+        
+        // Update logo on canvas
+        updateLogoOnCanvas(logoType);
+      });
+    });
+    
+    if (uploadLogoBtn && logoFileInput) {
+      uploadLogoBtn.addEventListener('click', () => {
+        logoFileInput.click();
+      });
+      
+      logoFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          handleLogoUpload(file);
+        }
+      });
+    }
+    
+    // Remove background button
+    const removeLogoBgBtn = document.getElementById('removeLogoBgBtn');
+    if (removeLogoBgBtn) {
+      removeLogoBgBtn.addEventListener('click', () => {
+        if (originalFile) {
+          removeBackground();
+        }
+      });
+    }
+    
+    // 3D Adjustments
+    const tiltX = document.getElementById('tiltX');
+    const tiltY = document.getElementById('tiltY');
+    const depth = document.getElementById('depth');
+    if (tiltX) tiltX.addEventListener('input', apply3DAdjustments);
+    if (tiltY) tiltY.addEventListener('input', apply3DAdjustments);
+    if (depth) depth.addEventListener('input', apply3DAdjustments);
+    
+    // Shadow Controls
+    const shadowBlur = document.getElementById('shadowBlur');
+    const shadowOpacity = document.getElementById('shadowOpacity');
+    const shadowAngle = document.getElementById('shadowAngle');
+    const shadowDepth = document.getElementById('shadowDepth');
+    const removeShadowBtn = document.getElementById('removeShadowBtn');
+    const reset3DBtn = document.getElementById('reset3DBtn');
+    
+    if (shadowBlur) shadowBlur.addEventListener('input', applyShadowControls);
+    if (shadowOpacity) shadowOpacity.addEventListener('input', applyShadowControls);
+    if (shadowAngle) shadowAngle.addEventListener('input', applyShadowControls);
+    if (shadowDepth) shadowDepth.addEventListener('input', applyShadowControls);
+    if (removeShadowBtn) removeShadowBtn.addEventListener('click', removeShadow);
+    if (reset3DBtn) reset3DBtn.addEventListener('click', reset3D);
+    
+    // Text controls
+    const addTextBtn = document.getElementById('addTextBtn');
+    const boldBtn = document.getElementById('boldBtn');
+    const italicBtn = document.getElementById('italicBtn');
+    
+    if (addTextBtn) addTextBtn.addEventListener('click', addNewText);
+    if (boldBtn) boldBtn.addEventListener('click', () => toggleFontWeight('bold'));
+    if (italicBtn) italicBtn.addEventListener('click', toggleFontStyle);
+    
+    // Custom color picker
+    const customColorBtn = document.querySelector('[data-color="#000000"]:last-child');
+    const customColorPanel = document.querySelector('.custom-color-panel');
+    const applyCustomColor = document.getElementById('applyCustomColor');
+    const cancelCustomColor = document.getElementById('cancelCustomColor');
+    const customColorPicker = document.getElementById('customColorPicker');
+    const customColorHex = document.getElementById('customColorHex');
+    
+    if (customColorBtn && customColorPanel) {
+      // Toggle custom color panel
+      customColorBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        customColorPanel.style.display = customColorPanel.style.display === 'none' ? 'block' : 'none';
+      });
+    }
+    
+    if (applyCustomColor && cancelCustomColor && customColorPicker && customColorHex) {
+      // Sync color picker with hex input
+      customColorPicker.addEventListener('input', (e) => {
+        customColorHex.value = e.target.value.toUpperCase();
+        customColorBtn.style.background = e.target.value;
+      });
+      
+      // Sync hex input with color picker
+      customColorHex.addEventListener('input', (e) => {
+        const hex = e.target.value;
+        if (/^#[0-9A-F]{6}$/i.test(hex)) {
+          customColorPicker.value = hex;
+          customColorBtn.style.background = hex;
+        }
+      });
+      
+      // Apply color button
+      applyCustomColor.addEventListener('click', () => {
+        const color = customColorPicker.value;
+        setBackground(color);
+        customColorBtn.style.background = color;
+        customColorBtn.setAttribute('data-color', color);
+        customColorPanel.style.display = 'none';
+      });
+      
+      // Cancel button - hide panel
+      cancelCustomColor.addEventListener('click', () => {
+        customColorPanel.style.display = 'none';
+      });
+      
+      // Also apply color when Enter key is pressed in hex input
+      customColorHex.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          const color = customColorPicker.value;
+          setBackground(color);
+          customColorBtn.style.background = color;
+          customColorBtn.setAttribute('data-color', color);
+          customColorPanel.style.display = 'none';
+        }
+      });
+    }
+    
+    // Download buttons
+    const downloadPng = document.getElementById('downloadPng');
+    const downloadJpg = document.getElementById('downloadJpg');
+    
+    if (downloadPng) downloadPng.addEventListener('click', () => exportPoster('png'));
+    if (downloadJpg) downloadJpg.addEventListener('click', () => exportPoster('jpeg'));
+    
+    // Keyboard shortcuts - improved with better handling
+    document.addEventListener('keydown', (e) => {
+      // Don't trigger shortcuts when typing in inputs
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
+        // Allow Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+A in text inputs
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x' || e.key === 'a')) {
+          return; // Let browser handle it
+        }
+        // Block other shortcuts in inputs
+        if (e.key !== 'Escape') return;
+      }
+      
+      // Delete key
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (canvas && canvas.getActiveObject()) {
+          e.preventDefault();
+          deleteSelected();
+        }
+      }
+      // Undo (Ctrl+Z or Cmd+Z)
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      // Redo (Ctrl+Shift+Z or Ctrl+Y or Cmd+Shift+Z)
+      else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+      // Copy (Ctrl+C or Cmd+C)
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        if (canvas && canvas.getActiveObject()) {
+          e.preventDefault();
+          copySelected();
+          addChangeToLog('Copied object');
+        }
+      }
+      // Paste (Ctrl+V or Cmd+V)
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        if (canvas) {
+          e.preventDefault();
+          pasteSelected();
+          addChangeToLog('Pasted object');
+        }
+      }
+      // Cut (Ctrl+X or Cmd+X)
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
+        if (canvas && canvas.getActiveObject()) {
+          e.preventDefault();
+          copySelected();
+          deleteSelected();
+          addChangeToLog('Cut object');
+        }
+      }
+      // Select All (Ctrl+A or Cmd+A)
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        if (canvas) {
+          e.preventDefault();
+          const objects = canvas.getObjects().filter(obj => obj.selectable !== false);
+          if (objects.length > 0) {
+            // Simple selection without ActiveSelection to avoid setPositionByOrigin
+            canvas.discardActiveObject();
+            objects.forEach(obj => canvas.setActiveObject(obj, false));
+            canvas.requestRenderAll();
+            addChangeToLog('Selected all objects');
+          }
+        }
+      }
+      // Duplicate (Ctrl+D or Cmd+D)
+      else if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        if (canvas && canvas.getActiveObject()) {
+          e.preventDefault();
+          copySelected();
+          pasteSelected();
+          addChangeToLog('Duplicated object');
+        }
+      }
+      // Reset zoom (Ctrl+0 or Cmd+0)
+      else if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        if (canvas) {
+          e.preventDefault();
+          canvas.setZoom(1);
+          canvas.viewportTransform[4] = 0;
+          canvas.viewportTransform[5] = 0;
+          canvas.requestRenderAll();
+          updateCanvasInfo();
+          addChangeToLog('Reset zoom');
+        }
+      }
+    });
+    
+    // Helper functions for new layout
+    let customLogoImage = null; // Store custom logo
+    
+    function ensureLogoOnTop() {
+      if (logoLayer && canvas) {
+        canvas.bringToFront(logoLayer);
+        canvas.renderAll();
+      }
+    }
+
+    function applyProductShadow(img) {
+      if (img && img.isProductImage) {
+        img.set({
+          shadow: {
+            color: 'rgba(0, 0, 0, 0.4)',
+            blur: 20,
+            offsetX: 8,
+            offsetY: 8
+          }
+        });
+        canvas.renderAll();
+      }
+    }
+
+    function ensureAllProductImagesHaveShadows() {
+      if (!canvas) return;
+      
+      const objects = canvas.getObjects();
+      objects.forEach(obj => {
+        if (obj.isProductImage && !obj.shadow) {
+          applyProductShadow(obj);
+        }
+      });
+    }
+
+    function removeTopLeftText() {
+      if (!canvas) return;
+      
+      const objects = canvas.getObjects();
+      objects.forEach(obj => {
+        // Remove any text or objects in top-left corner area
+        if ((obj.type === 'textbox' || obj.type === 'text') && 
+            (obj.left < 200 && obj.top < 200)) {
+          console.log("Removing text from top-left area:", obj.text);
+          canvas.remove(obj);
+        }
+        // Also remove any logos in top-left area
+        if ((obj.isDefaultLogo || obj.isBrandLogo) && 
+            (obj.left < 200 && obj.top < 200)) {
+          console.log("Removing logo from top-left area");
+          canvas.remove(obj);
+        }
+      });
+      canvas.renderAll();
+    }
+
+    function updateLogoOnCanvas(logoType) {
+      if (!canvas) return;
+      
+      // Remove existing logo
+      if (logoLayer) {
+        canvas.remove(logoLayer);
+        logoLayer = null;
+      }
+      
+      if (logoType === 'tesco') {
+        createTescoLogo();
+      } else if (logoType === 'custom' && customLogoImage) {
+        // Use uploaded custom logo
+        const img = new fabric.Image(customLogoImage);
+        scaleAndPositionLogo(img, true);
+        logoLayer = img;
+        canvas.add(img);
+        // Ensure logo stays on top
+        canvas.bringToFront(img);
+        canvas.renderAll();
+      }
+    }
+    
+    function createTescoLogo() {
+      console.log("Creating Tesco logo...");
+      
+      try {
+        // Create Tesco text with red accent
+        const tescoText = new fabric.Text("tesco", {
+          fontFamily: "Helvetica",
+          fontSize: 28,
+          fill: "#00539F",
+          fontWeight: "normal"
+        });
+        
+        // Create red accent rectangle
+        const redAccent = new fabric.Rect({
+          width: tescoText.width,
+          height: 2,
+          fill: "#e10600",
+          left: 0,
+          top: tescoText.height + 1
+        });
+        
+        // Group them together
+        logoLayer = new fabric.Group([tescoText, redAccent], {
+          left: 20,
+          top: 20,
+          selectable: false,
+          evented: false,
+          hasControls: false,
+          lockMovementX: true,
+          lockMovementY: true,
+          isDefaultLogo: true
+        });
+        
+        canvas.add(logoLayer);
+        // Ensure logo stays on top
+        canvas.bringToFront(logoLayer);
+        canvas.renderAll();
+        console.log("Tesco logo created");
+        
+      } catch (error) {
+        console.error("Error creating Tesco logo:", error);
+        logoLayer = null;
+      }
+    }
+    
+    function scaleAndPositionLogo(img, isTopLeft = true) {
+      // Scale logo to be reasonable size
+      const maxLogoWidth = canvas.width * 0.15; // 15% of canvas width
+      const maxLogoHeight = canvas.height * 0.15; // 15% of canvas height
+      
+      let scale = 1;
+      if (img.width > maxLogoWidth) {
+        scale = maxLogoWidth / img.width;
+      }
+      if (img.height * scale > maxLogoHeight) {
+        scale = maxLogoHeight / img.height;
+      }
+      
+      img.scale(scale);
+      
+      // Position logo at top-left
+      img.set({
+        left: 20,
+        top: 20,
+        isBrandLogo: true,
+        selectable: false,
+        evented: false,
+        hasControls: false,
+        hasBorders: false
+      });
+    }
+    
+    function handleLogoUpload(file) {
+      console.log("=== UPLOADING CUSTOM LOGO ===");
+      
+      if (!canvas) {
+        console.error("Canvas not available!");
+        return;
+      }
+      
+      // Read and display image
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        fabric.Image.fromURL(e.target.result, function(img) {
+          // Store the original image for later use
+          customLogoImage = img.getElement();
+          
+          scaleAndPositionLogo(img, true);
+          
+          // Remove existing logo if any
+          if (logoLayer) {
+            canvas.remove(logoLayer);
+          }
+          
+          logoLayer = img;
+          canvas.add(img);
+          // Ensure logo stays on top
+          canvas.bringToFront(img);
+          canvas.renderAll();
+          
+          console.log("Custom logo added to canvas");
+        });
+      };
+      
+      reader.readAsDataURL(file);
+    }
+    
+    function removeBackground() {
+      if (!originalFile) return;
+      
+      // Call background removal API
+      removeBgRequest(originalFile).then(blob => {
+        const url = URL.createObjectURL(blob);
+        fabric.Image.fromURL(url, (img) => {
+          if (logoLayer) {
+            canvas.remove(logoLayer);
+          }
+          
+          // Calculate maximum dimensions while maintaining aspect ratio
+          const maxWidth = canvas.width * 0.8;  // 80% of canvas width
+          const maxHeight = canvas.height * 0.8; // 80% of canvas height
+          
+          // Calculate scale to fit while maintaining aspect ratio
+          let scale = 1;
+          if (img.width > maxWidth || img.height > maxHeight) {
+            scale = Math.min(
+              maxWidth / img.width,
+              maxHeight / img.height
+            );
+          }
+          
+          // Apply scale
+          img.scale(scale);
+          
+          // Position at center
+          img.set({
+            left: canvas.width / 2,
+            top: canvas.height / 2
+          });
+          
+          logoLayer = img;
+          canvas.add(img);
+          // Ensure logo stays on top
+          canvas.bringToFront(img);
+          canvas.renderAll();
+        });
+      }).catch(err => {
+        console.error('Background removal failed:', err);
+      });
+    }
+    
+    function apply3DAdjustments() {
+      const activeObject = canvas.getActiveObject();
+      if (!activeObject) return;
+      
+      const tiltX = Number(document.getElementById('tiltX').value);
+      const tiltY = Number(document.getElementById('tiltY').value);
+      const depth = Number(document.getElementById('depth').value);
+      
+      // Update display values
+      document.getElementById('tiltXValue').textContent = tiltX;
+      document.getElementById('tiltYValue').textContent = tiltY;
+      document.getElementById('depthValue').textContent = depth;
+      
+      // Apply 3D transformation with perspective
+      // Use skew for perspective effect - safe approach for Fabric.js 3.6.3
+      try {
+        activeObject.set({
+          skewX: tiltX * 0.5, // Reduce skew intensity for stability
+          skewY: tiltY * 0.5,
+          angle: depth
+        });
+        canvas.renderAll();
+        addChangeToLog(`3D adjusted: X=${tiltX}°, Y=${tiltY}°, Rot=${depth}°`);
+      } catch(err) {
+        console.error("Error applying 3D adjustments:", err);
+      }
+    }
+    
+    function reset3D() {
+      document.getElementById('tiltX').value = 0;
+      document.getElementById('tiltY').value = 0;
+      document.getElementById('depth').value = 0;
+      apply3DAdjustments();
+    }
+    
+    function addNewText() {
+      if (!canvas) {
+        console.error("Canvas not initialized");
+        alert("Please wait for the editor to load completely.");
+        return;
+      }
+      
+      const text = prompt('Enter text:');
+      if (!text || text.trim() === '') return;
+      
+      const fontSize = Number(document.getElementById('fontSize')?.value) || 42;
+      const fontSelect = document.getElementById('fontSelect');
+      const fontFamily = fontSelect ? fontSelect.value : 'Arial';
+      const fontColorEl = document.getElementById('fontColor');
+      const fontColor = fontColorEl ? fontColorEl.value : '#333333';
+      
+      // Simple center positioning - no viewport calculations
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      const textbox = new fabric.Textbox(text.trim(), {
+        left: centerX,
+        top: centerY,
+        fontSize: fontSize,
+        fontFamily: fontFamily,
+        fill: fontColor,
+        width: canvas.width * 0.8,
+        editable: true,
+        selectable: true,
+        hasControls: true,
+        hasBorders: true
+      });
+      
+      // Center the text properly
+      textbox.set({
+        left: centerX - (textbox.width * textbox.scaleX) / 2,
+        top: centerY - (textbox.height * textbox.scaleY) / 2
+      });
+      
+      canvas.add(textbox);
+      canvas.setActiveObject(textbox);
+      canvas.renderAll();
+      // Ensure logo stays on top
+      ensureLogoOnTop();
+      addChangeToLog(`Text added: "${text}" (${fontFamily}, ${fontSize}px)`);
+      
+      // Enter edit mode immediately
+      setTimeout(() => {
+        if (textbox.isEditing) {
+          textbox.enterEditing();
+          textbox.selectAll();
+        }
+      }, 100);
+    }
+    
+    function deleteSelected() {
+      const active = canvas.getActiveObject();
+      if (active) {
+        canvas.remove(active);
+        canvas.renderAll();
+      }
+    }
+    
+    let history = [];
+    let historyIndex = -1;
+    
+    function saveHistory() {
+      history = history.slice(0, historyIndex + 1);
+      history.push(JSON.stringify(canvas.toJSON()));
+      historyIndex++;
+    }
+    
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        canvas.loadFromJSON(history[historyIndex], () => {
+          canvas.renderAll();
+        });
+      }
+    }
+    
+    function redo() {
+      if (historyIndex < history.length - 1) {
+        historyIndex++;
+        canvas.loadFromJSON(history[historyIndex], () => {
+          canvas.renderAll();
+        });
+      }
+    }
+    
+    let copiedObject = null;
+    
+    function copySelected() {
+      const active = canvas.getActiveObject();
+      if (active) {
+        active.clone((cloned) => {
+          copiedObject = cloned;
+        });
+      }
+    }
+    
+    function pasteSelected() {
+      if (copiedObject) {
+        copiedObject.clone((cloned) => {
+          cloned.set({
+            left: cloned.left + 20,
+            top: cloned.top + 20
+          });
+          canvas.add(cloned);
+          // canvas.setActiveObject(cloned); // REMOVED
+          canvas.renderAll();
+        });
+      }
+    }
+    
+    // Save history on canvas changes - only after canvas is initialized
+    function initializeCanvasEvents() {
+      if (!canvas) return;
+      
+      canvas.on('object:modified', saveHistory);
+      canvas.on('object:added', saveHistory);
+      canvas.on('object:removed', saveHistory);
+    }
+    let pickr;
+    async function initEditor(){
+      console.log("Initializing editor with designData:", designData);
+      if(canvas){ canvas.dispose(); }
+      
+      // Get canvas element
+      const canvasElement = document.getElementById("mainCanvas");
+      canvasElement.style.display = "block";
+      canvasElement.style.maxWidth = "100%";
+      canvasElement.style.maxHeight = "100%";
+      
+      canvas = new fabric.Canvas("mainCanvas", { 
+        preserveObjectStacking: true,
+        backgroundColor: "#ffffff",
+        renderOnAddRemove: true,
+        selection: true,
+        defaultCursor: 'default',
+        hoverCursor: 'move',
+        moveCursor: 'move'
+      });
+      
+      // Canvas zoom and pan variables
+      let canvasZoom = 1;
+      let canvasPan = { x: 0, y: 0 };
+      let isPanning = false;
+      let lastPanPoint = { x: 0, y: 0 };
+      
+      // Mouse wheel and touchpad zoom
+      canvas.on('mouse:wheel', function(opt) {
+        const delta = opt.e.deltaY;
+        const pointer = canvas.getPointer(opt.e);
+        let zoom = canvas.getZoom();
+        
+        // Handle both touchpad (smooth) and mouse wheel (stepped) zooming
+        // Use smaller zoom factor for smoother zooming
+        const zoomFactor = opt.e.ctrlKey ? 0.95 : 0.995;
+        zoom *= Math.pow(zoomFactor, Math.abs(delta));
+        
+        // Limit zoom between 0.1x and 5x
+        zoom = Math.max(0.1, Math.min(5, zoom));
+        
+        // Get the correct pointer position
+        const rect = canvas.getElement().getBoundingClientRect();
+        const pointerX = opt.e.clientX - rect.left;
+        const pointerY = opt.e.clientY - rect.top;
+        
+        // Smooth zoom to pointer position
+        canvas.zoomToPoint(
+          { x: pointerX, y: pointerY },
+          zoom
+        );
+        
+        opt.e.preventDefault();
+        opt.e.stopPropagation();
+        
+        updateCanvasInfo();
+        console.log("Zoom level:", zoom);
+      });
+      
+      // Pan with middle mouse button or space + drag
+      canvas.on('mouse:down', function(opt) {
+        const evt = opt.e;
+        if (evt.button === 1 || (evt.button === 0 && evt.spaceKey)) {
+          isPanning = true;
+          canvas.selection = false;
+          lastPanPoint = { x: evt.clientX, y: evt.clientY };
+        }
+      });
+      
+      canvas.on('mouse:move', function(opt) {
+        if (isPanning) {
+          const e = opt.e;
+          const vpt = canvas.viewportTransform;
+          vpt[4] += e.clientX - lastPanPoint.x;
+          vpt[5] += e.clientY - lastPanPoint.y;
+          canvas.requestRenderAll();
+          lastPanPoint = { x: e.clientX, y: e.clientY };
+        }
+      });
+      
+      canvas.on('mouse:up', function(opt) {
+        if (isPanning) {
+          isPanning = false;
+          canvas.selection = true;
+        }
+      });
+      
+      // Reset zoom with double-click
+      canvas.on('mouse:dblclick', function() {
+        canvas.setZoom(1);
+        canvas.viewportTransform[4] = 0;
+        canvas.viewportTransform[5] = 0;
+        canvasZoom = 1;
+        canvasPan = { x: 0, y: 0 };
+        canvas.requestRenderAll();
+        updateCanvasInfo();
+      });
+      
+      // Enable object movement and resizing
+      canvas.on('object:moving', function(e) {
+        try {
+          e.target.setCoords();
+          addChangeToLog(`Moved ${e.target.type}`);
+        } catch(err) {
+          console.warn("Error in object moving:", err);
+        }
+      });
+      
+      canvas.on('object:scaling', function(e) {
+        try {
+          e.target.setCoords();
+          addChangeToLog(`Resized ${e.target.type}`);
+        } catch(err) {
+          console.warn("Error in object scaling:", err);
+        }
+      });
+      
+      canvas.on('object:rotating', function(e) {
+        try {
+          e.target.setCoords();
+          addChangeToLog(`Rotated ${e.target.type}`);
+        } catch(err) {
+          console.warn("Error in object rotating:", err);
+        }
+      });
+      console.log("Canvas created:", canvas);
+      
+      // Initialize canvas info after canvas is created
+      if (typeof updateCanvasInfo === 'function') {
+        updateCanvasInfo();
+      }
+      
+      // Ensure all product images have shadow effects
+      setTimeout(() => {
+        ensureAllProductImagesHaveShadows();
+      }, 500);
+      
+      // Initialize all controls
+      if (typeof hookControls === 'function') {
+        hookControls();
+      }
+      
+      // Global error handler for Fabric.js
+      window.addEventListener('error', function(e) {
+        console.error('Global error:', e.error);
+        if (e.error && e.error.message && e.error.message.includes('setPositionByOrigin')) {
+          console.error('setPositionByOrigin error detected - this is a Fabric.js internal method issue');
+          e.preventDefault(); // Prevent the error from showing to user
+        }
+      });
+      
+      // Simple error handler without overriding fabric methods
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('Unhandled promise rejection:', e.reason);
+      });
+      
+      // Global error suppression for Fabric.js
+      window.addEventListener('error', function(e) {
+        if (e.error && (e.error.message && e.error.message.includes('setPositionByOrigin') || 
+            e.error.message && e.error.message.includes('setOrigin') ||
+            e.error.message && e.error.message.includes('origin'))) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      });
+      
+      // Override console.error to suppress Fabric.js errors
+      const originalConsoleError = console.error;
+      console.error = function(...args) {
+        const message = args[0];
+        if (typeof message === 'string' && 
+            (message.includes('setPositionByOrigin') || 
+             message.includes('setOrigin') ||
+             message.includes('origin'))) {
+          return; // Suppress the error
+        }
+        originalConsoleError.apply(console, args);
+      };
+      
+      // Override fabric.Object.prototype.set completely
+      fabric.Object.prototype.set = function(options) {
+        try {
+          const originalSet = Object.getPrototypeOf(this).set;
+          if (originalSet) {
+            return originalSet.call(this, options);
+          }
+        } catch(err) {
+          // Silently handle any errors
+        }
+        // Manual fallback
+        for (const key in options) {
+          this[key] = options[key];
+        }
+        return this;
+      };
+      
+      const ratio = designData?.ratio || "1:1";
+      // Set ratio in editor dropdown
+      const ratioSelect = document.getElementById("ratioSelect");
+      if(ratioSelect) ratioSelect.value = ratio;
+      setCanvasSize(ratio);
+
+      // Update explanation data in retail intelligence panel
+      if (designData.explanation) {
+        const exp = designData.explanation;
+        const explanationPreset = document.getElementById("explanationPreset");
+        const explanationColors = document.getElementById("explanationColors");
+        const explanationPlacement = document.getElementById("explanationPlacement");
+        const explanationCompliance = document.getElementById("explanationCompliance");
+        const explanationRationale = document.getElementById("explanationRationale");
+        
+        if (explanationPreset) explanationPreset.textContent = exp.retail_preset || "-";
+        if (explanationColors) explanationColors.textContent = (exp.color_choices || []).join(", ") || "-";
+        if (explanationPlacement) explanationPlacement.textContent = exp.text_placement || "-";
+        if (explanationCompliance) explanationCompliance.textContent = exp.compliance_score || "Tesco Brand Compliant";
+        if (explanationRationale) explanationRationale.textContent = exp.design_rationale || "-";
+      }
+
+      // Background: color plus texture from backend - set initial background
+      if (designData.background_color || designData.texture) {
+        await setBackground(designData.background_color || "#ffffff", designData.texture);
+      }
+
+      // Logo - use the selected logo type
+      const selectedLogoType = document.querySelector('input[name="logoType"]:checked')?.value || 'tesco';
+      console.log(`Creating ${selectedLogoType} logo...`);
+      
+      if (selectedLogoType === 'tesco') {
+        createTescoLogo();
+      } else if (selectedLogoType === 'custom' && customLogoImage) {
+        const img = new fabric.Image(customLogoImage);
+        scaleAndPositionLogo(img, true);
+        logoLayer = img;
+        canvas.add(img);
+      } else {
+        // Fallback to Tesco logo
+        createTescoLogo();
+      }
+
+      // Product layer from removed background blob
+      if(removedBgBlob) {
+        console.log("Adding product layer from blob");
+        const productUrl = URL.createObjectURL(removedBgBlob);
+        await new Promise(resolve=>{
+          fabric.Image.fromURL(productUrl, (img)=>{
+            // Scale product to be 40-60% of canvas width, preserve aspect ratio
+            const maxProductWidth = canvas.width * 0.5;
+            const maxProductHeight = canvas.height * 0.6;
+            img.scaleToWidth(maxProductWidth);
+            
+            // Check if image fits within height constraints after scaling
+            if (img.height * img.scaleY > maxProductHeight) {
+              img.scaleToHeight(maxProductHeight);
+            }
+            
+            // Calculate position to center product image
+            let leftPos, topPos;
+            const canvasRatio = canvas.width / canvas.height;
+            
+            // Always center the product image
+            leftPos = (canvas.width - maxProductWidth) / 2;
+            topPos = (canvas.height - maxProductHeight) / 2;
+            
+            // Position product based on calculated position
+            img.set({
+              left: leftPos,
+              top: topPos,
+              selectable: true,
+              lockScalingFlip: true,
+              flipX: false,
+              isProductImage: true,
+              shadow: {
+                color: 'rgba(0, 0, 0, 0.4)',
+                blur: 20,
+                offsetX: 8,
+                offsetY: 8
+              }
+            });
+            
+            canvas.add(img);
+            // canvas.setActiveObject(img); // REMOVED
+            console.log("Product image added to canvas");
+            // Ensure product has shadow effect
+            applyProductShadow(img);
+            // Ensure logo stays on top
+            ensureLogoOnTop();
+            resolve();
+          }, { crossOrigin:"anonymous" });
+        });
+        applyShadowControls();
+      } else {
+        console.log("No removedBgBlob found");
+      }
+
+      // Headline/Subhead seeded from backend - positioned at bottom to avoid interference
+      const headlineText = designData.headline || "Hero headline";
+      const subheadText = designData.subhead || "Crafted for your campaign";
+      
+      // Calculate positioning below product image
+      const bottomPadding = 40;
+      const productBottom = canvas.height * 0.5 + (canvas.height * 0.6) / 2; // Center of product image + half its height
+      const headlineY = productBottom + 60; // Text below product
+      const subheadY = productBottom + 110; // Subhead further below
+      
+      // Create text boxes first to get their actual width
+      const headlineBox = new fabric.Textbox(headlineText, {
+        fontSize: 72,
+        fontFamily: "Arial",
+        fontWeight: "700",
+        fill: "#00539f"
+      });
+      
+      const subheadBox = new fabric.Textbox(subheadText, {
+        fontSize: 42,
+        fontFamily: "Arial",
+        fontWeight: "400",
+        fill: "#333333"
+      });
+      
+      // Calculate proper centering based on actual text width
+      const headlineX = (canvas.width - headlineBox.width) / 2;
+      const subheadX = (canvas.width - subheadBox.width) / 2;
+      
+      // Add text boxes with proper positioning
+      addTextBox(headlineText, headlineX, headlineY, 72, true, "Arial", "#00539f");
+      addTextBox(subheadText, subheadX, subheadY, 42, false, "Arial", "#333333");
+      console.log("Text elements added below product image with proper centering");
+
+      // Palette + pickr
+      // buildPalette() - No longer needed, color palette is now organized in HTML
+      // Skip Pickr creation since we use color buttons instead
+      // if(pickr){ pickr.destroyAndRemove(); }
+      // pickr = Pickr.create({
+      //   el: '#bgColorPicker',
+      //   theme: 'classic',
+      //   default: designData.background_color || "#ffffff",
+      //   components: { preview:true, opacity:false, hue:true, interaction:{ hex:true, input:true } }
+      // });
+      // pickr.on("change",(color)=> setBackground(color.toHEXA().toString()) );
+
+      hookControls();
+      console.log("Editor initialization complete");
+    }
+
+    function setBackground(color, texture){
+      console.log("Setting background:", color, texture ? "texture provided" : "no texture");
+      
+      if (texture) {
+        // Handle texture background
+        console.log("Loading texture:", texture.substring(0, 50) + "...");
+        console.log("Texture length:", texture.length);
+        
+        let imageUrl = texture;
+        if (!texture.startsWith('data:image/')) {
+          console.log("Texture doesn't start with data:image/, prefixing with data:image/png;base64,");
+          imageUrl = `data:image/png;base64,${texture}`;
+        }
+        
+        return new Promise((resolve, reject) => {
+          fabric.Image.fromURL(imageUrl, (bgImg) => {
+            console.log("Background image loaded successfully, dimensions:", bgImg.width, "x", bgImg.height);
+            console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
+            
+            if (bgImg.width === 0 || bgImg.height === 0) {
+              console.error("Invalid image dimensions");
+              canvas.backgroundColor = color || "#ffffff";
+              canvas.renderAll();
+              resolve();
+              return;
+            }
+            
+            // Scale background to fill canvas completely
+            bgImg.scaleToWidth(canvas.width);
+            bgImg.scaleToHeight(canvas.height);
+            bgImg.set({
+              left: 0,
+              top: 0,
+              selectable: false
+            });
+            
+            // Mark as background image for easy removal
+            bgImg.isBackgroundImage = true;
+            
+            // Remove any existing background images first
+            const existingBgImages = canvas.getObjects().filter(obj => obj.isBackgroundImage);
+            existingBgImages.forEach(obj => canvas.remove(obj));
+            
+            // Add as regular object and bring to front instead of background image
+            canvas.add(bgImg);
+            // bgImg.moveTo(0); // Move to bottom layer - REMOVED
+            // canvas.sendToBack(bgImg); // Send to back layer - REMOVED
+            
+            // Ensure logo stays on top
+            ensureLogoOnTop();
+            console.log("Background added as object and sent to back");
+            canvas.renderAll();
+            resolve();
+          }, { crossOrigin:"anonymous" }, (error) => {
+            console.error("Error loading background image:", error);
+            console.log("Falling back to solid background");
+            canvas.backgroundColor = color || "#ffffff";
+            canvas.renderAll();
+            resolve();
+          });
+        });
+      } else {
+        // Simple solid color background
+        console.log("Setting solid background color:", color);
+        if (!canvas) {
+          console.error("Canvas not available in setBackground");
+          return Promise.resolve();
+        }
+        
+        // Remove any background image objects first
+        const objects = canvas.getObjects();
+        objects.forEach(obj => {
+          if (obj.isBackgroundImage || (obj.selectable === false && obj.evented === false && obj.left === 0 && obj.top === 0)) {
+            canvas.remove(obj);
+          }
+        });
+        
+        canvas.backgroundColor = color || "#ffffff";
+        canvas.renderAll();
+        console.log("Background color set successfully");
+        updateCanvasInfo();
+        return Promise.resolve();
+      }
+    }
+
+    function buildPalette(){
+      // Color palette is now organized in HTML, no need to build dynamically
+      return;
+      const colors = [
+        {name:"White", hex:"#ffffff"},
+        {name:"Tesco Blue", hex:"#00539f"},
+        {name:"Tesco Red", hex:"#e10600"},
+        {name:"Light Grey", hex:"#f2f2f2"},
+        {name:"Mid Grey", hex:"#e5e5e5"},
+        {name:"Pale Blue", hex:"#eef3f7"},
+        {name:"Pale Green", hex:"#eef6f1"},
+        {name:"Sunset", hex:"#f59e0b"},
+        {name:"Mint", hex:"#10b981"}
+      ];
+      const grid = document.getElementById("bgPalette");
+      if (!grid) return; // Add null check
+      grid.innerHTML = "";
+      colors.forEach(c=>{
+        const btn = document.createElement("button");
+        btn.className="color-btn";
+        btn.style.background = c.hex;
+        btn.innerHTML = `<span>${c.name}</span><span>${c.hex}</span>`;
+        btn.onclick = ()=>{ setBackground(c.hex); if(pickr) pickr.setColor(c.hex); };
+        grid.appendChild(btn);
+      });
+    }
+
+    function addTextBox(text, left, top, size, bold, fontFamily = "Arial", color = "#333333"){
+      const tb = new fabric.Textbox(text, {
+        left, top, fontSize:size, fontFamily:fontFamily,
+        fontWeight: bold ? "700" : "400", fill: color
+      });
+      canvas.add(tb);
+      // Ensure logo stays on top
+      ensureLogoOnTop();
+      return tb;
+    }
+
+    function applyShadowControls(){
+      const activeObject = canvas.getActiveObject();
+      if(!activeObject) return;
+      
+      const blurEl = document.getElementById("shadowBlur");
+      const opacityEl = document.getElementById("shadowOpacity");
+      const angleEl = document.getElementById("shadowAngle");
+      const depthEl = document.getElementById("shadowDepth");
+      
+      if(!blurEl || !opacityEl || !angleEl || !depthEl) {
+        console.log("Shadow controls not available yet");
+        return;
+      }
+      
+      const blur = Number(blurEl.value);
+      const opacity = Number(opacityEl.value) / 100; // Convert to 0-1 range
+      const angle = Number(angleEl.value);
+      const depth = Number(depthEl.value);
+      
+      // Update display values
+      const blurValue = document.getElementById('shadowBlurValue');
+      const opacityValue = document.getElementById('shadowOpacityValue');
+      const angleValue = document.getElementById('shadowAngleValue');
+      const depthValue = document.getElementById('shadowDepthValue');
+      if (blurValue) blurValue.textContent = blur;
+      if (opacityValue) opacityValue.textContent = opacityEl.value;
+      if (angleValue) angleValue.textContent = angleEl.value;
+      if (depthValue) depthValue.textContent = depth;
+      
+      // Apply shadow with proper curve handling - safe approach for Fabric.js 3.6.3
+      try {
+        // For images with curves, use higher blur for smoother shadows
+        const adjustedBlur = activeObject.type === 'image' ? blur * 1.2 : blur;
+        
+        // Convert angle to radians for shadow offset calculation
+        const angleRad = angle * Math.PI / 180;
+        
+        activeObject.set("shadow", new fabric.Shadow({
+          color:`rgba(0,0,0,${opacity})`,
+          blur: adjustedBlur,
+          offsetX: Math.cos(angleRad) * depth,
+          offsetY: Math.sin(angleRad) * depth
+        }));
+        
+        canvas.renderAll();
+        addChangeToLog(`Shadow: blur=${blur}px, opacity=${opacityEl.value}%, angle=${angle}°, distance=${depth}px`);
+      } catch(err) {
+        console.error("Error applying shadow:", err);
+      }
+    }
+    function removeShadow() {
+      const activeObject = canvas.getActiveObject();
+      if (!activeObject) return;
+      activeObject.set("shadow", null);
+      canvas.renderAll();
+      addChangeToLog("Shadow removed");
+    }
+
+    function hookControls(){
+      // Shadow controls
+      const shadowBlur = document.getElementById("shadowBlur");
+      const shadowOpacity = document.getElementById("shadowOpacity");
+      const shadowAngle = document.getElementById("shadowAngle");
+      const shadowDepth = document.getElementById("shadowDepth");
+      const removeShadowBtn = document.getElementById("removeShadowBtn");
+      
+      if(shadowBlur) {
+        shadowBlur.oninput = applyShadowControls;
+        shadowBlur.addEventListener('input', () => {
+          const val = document.getElementById('shadowBlurValue');
+          if (val) val.textContent = shadowBlur.value;
+        });
+      }
+      if(shadowOpacity) {
+        shadowOpacity.oninput = applyShadowControls;
+        shadowOpacity.addEventListener('input', () => {
+          const val = document.getElementById('shadowOpacityValue');
+          if (val) val.textContent = shadowOpacity.value;
+        });
+      }
+      if(shadowAngle) {
+        shadowAngle.oninput = applyShadowControls;
+        shadowAngle.addEventListener('input', () => {
+          const val = document.getElementById('shadowAngleValue');
+          if (val) val.textContent = shadowAngle.value;
+        });
+      }
+      if(shadowDepth) {
+        shadowDepth.oninput = applyShadowControls;
+        shadowDepth.addEventListener('input', () => {
+          const val = document.getElementById('shadowDepthValue');
+          if (val) val.textContent = shadowDepth.value;
+        });
+      }
+      if(removeShadowBtn) removeShadowBtn.onclick = removeShadow;
+
+      // 3D Controls
+      const tiltX = document.getElementById('tiltX');
+      const tiltY = document.getElementById('tiltY');
+      const depth = document.getElementById('depth');
+      const reset3DBtn = document.getElementById('reset3DBtn');
+      
+      if(tiltX) {
+        tiltX.oninput = apply3DAdjustments;
+        tiltX.addEventListener('input', () => {
+          const val = document.getElementById('tiltXValue');
+          if (val) val.textContent = tiltX.value;
+        });
+      }
+      if(tiltY) {
+        tiltY.oninput = apply3DAdjustments;
+        tiltY.addEventListener('input', () => {
+          const val = document.getElementById('tiltYValue');
+          if (val) val.textContent = tiltY.value;
+        });
+      }
+      if(depth) {
+        depth.oninput = apply3DAdjustments;
+        depth.addEventListener('input', () => {
+          const val = document.getElementById('depthValue');
+          if (val) val.textContent = depth.value;
+        });
+      }
+      if(reset3DBtn) reset3DBtn.onclick = reset3D;
+
+      // Text controls
+      const addTextBtn = document.getElementById("addTextBtn");
+      const fontSelect = document.getElementById("fontSelect");
+      const fontSize = document.getElementById("fontSize");
+      const fontColor = document.getElementById("fontColor");
+      const boldBtn = document.getElementById("boldBtn");
+      const italicBtn = document.getElementById("italicBtn");
+      
+      if(addTextBtn) addTextBtn.onclick = addNewText;
+      if(fontSelect) fontSelect.onchange = applyTextStyle;
+      if(fontSize) {
+        fontSize.oninput = applyTextStyle;
+        fontSize.addEventListener('input', () => {
+          const val = document.getElementById('fontSizeValue');
+          if (val) val.textContent = fontSize.value;
+        });
+      }
+      if(fontColor) fontColor.oninput = applyTextStyle;
+      if(boldBtn) boldBtn.onclick = ()=>toggleFontWeight("700");
+      if(italicBtn) italicBtn.onclick = ()=>toggleFontStyle();
+
+      // Export controls
+      const downloadPng = document.getElementById("downloadPng");
+      const downloadJpg = document.getElementById("downloadJpg");
+      const removeBgBtn = document.getElementById("removeBgBtn");
+      const ratioSelect = document.getElementById("ratioSelect");
+      
+      if(downloadPng) downloadPng.onclick = ()=>exportPoster("png");
+      if(downloadJpg) downloadJpg.onclick = ()=>exportPoster("jpeg");
+      if(removeBgBtn) removeBgBtn.onclick = async ()=>{
+        if(!originalFile) return;
+        removedBgBlob = await removeBgRequest(originalFile);
+        initEditor();
+      };
+      if(ratioSelect) ratioSelect.onchange = (e)=> setCanvasSize(e.target.value);
+    }
+
+    function applyTextStyle(){
+      const active = canvas.getActiveObject();
+      if(!active || active.type !== "textbox") return;
+      
+      const fontSize = document.getElementById("fontSize");
+      const fontSizeValue = fontSize ? Number(fontSize.value) : active.fontSize;
+      
+      active.set({
+        fontFamily: document.getElementById("fontSelect").value,
+        fontSize: fontSizeValue,
+        fill: document.getElementById("fontColor").value
+      });
+      canvas.renderAll();
+      addChangeToLog(`Text style updated: ${document.getElementById("fontSelect").value}, ${fontSizeValue}px`);
+    }
+    function toggleFontWeight(weight){
+      const active = canvas.getActiveObject();
+      if(!active || active.type !== "textbox") return;
+      active.set({ fontWeight: active.fontWeight === weight ? "400" : weight });
+      canvas.renderAll();
+    }
+    function toggleFontStyle(){
+      const active = canvas.getActiveObject();
+      if(!active || active.type !== "textbox") return;
+      active.set({ fontStyle: active.fontStyle === "italic" ? "normal" : "italic" });
+      canvas.renderAll();
+    }
+
+    function setCanvasSize(ratioKey) {
+      const size = ratioSizes[ratioKey];
+      if (!size) return;
+      
+      // Store current background and content before resize
+      const currentBg = canvas.backgroundColor;
+      const currentObjects = canvas.getObjects();
+      
+      // Resize canvas element
+      const canvasElement = document.getElementById("mainCanvas");
+      const container = canvasElement.parentElement;
+      
+      // Calculate scale to fit container while maintaining aspect ratio
+      const containerWidth = container.clientWidth - 40; // Account for padding
+      const containerHeight = container.clientHeight - 40;
+      
+      let scale = 1;
+      if (size.w > containerWidth || size.h > containerHeight) {
+        scale = Math.min(
+          containerWidth / size.w,
+          containerHeight / size.h
+        );
+        scale = Math.min(1, scale * 0.95); // Add some padding
+      }
+      
+      // Set canvas display size (scaled to fit container)
+      canvasElement.style.width = `${size.w * scale}px`;
+      canvasElement.style.height = `${size.h * scale}px`;
+      
+      // Set actual canvas size (full ratio size)
+      canvasElement.width = size.w;
+      canvasElement.height = size.h;
+      
+      // Update fabric canvas dimensions
+      canvas.setDimensions({
+        width: size.w,
+        height: size.h
+      });
+      
+      // Reset zoom to show full canvas
+      canvas.setZoom(1);
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      
+      // Restore background
+      canvas.backgroundColor = currentBg;
+      
+      // Reposition and scale objects
+      currentObjects.forEach(obj => {
+        try {
+          if (obj.isBrandLogo) {
+            // Position brand logo at bottom-right with padding
+            obj.set({
+              left: size.w - (obj.width * obj.scaleX) - (size.w * 0.05), // 5% padding
+              top: size.h - (obj.height * obj.scaleY) - (size.h * 0.05)
+            });
+          } else if (obj.isDefaultLogo) {
+            // Position default logo at top-left with padding
+            obj.set({
+              left: 20,
+              top: 20
+            });
+          } else if (obj.isProductImage) {
+            // Center product image with max 80% of canvas size
+            const maxWidth = size.w * 0.8;
+            const maxHeight = size.h * 0.6; // Use 60% for height to leave room for text
+            
+            // Calculate scale to fit while maintaining aspect ratio
+            let scaleX = maxWidth / obj.width;
+            let scaleY = maxHeight / obj.height;
+            let scale = Math.min(scaleX, scaleY);
+            
+            obj.scale(scale);
+            
+            // Calculate position to center product image
+            let leftPos, topPos;
+            const canvasRatio = size.w / size.h;
+            
+            // Always center the product image
+            leftPos = (size.w - maxWidth) / 2;
+            topPos = (size.h - maxHeight) / 2;
+            
+            // Position image
+            obj.set({
+              left: leftPos,
+              top: topPos,
+              hasControls: true
+            });
+            
+            // Ensure product image has shadow effect
+            applyProductShadow(obj);
+          }
+          
+          // Make sure object is selectable and visible
+          obj.set({
+            selectable: true,
+            evented: true,
+            hasBorders: true,
+            hasControls: true
+          });
+        } catch(err) {
+          console.warn("Error repositioning object:", err, obj);
+        }
+      });
+      
+      // Reset viewport and zoom
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+      canvas.renderAll();
+      updateCanvasInfo();
+      
+      // Don't center viewport or calc boundaries to avoid setPositionByOrigin error
+      // canvas.viewportCenterObject(canvas);
+      // canvas.calcViewportBoundaries();
+    }
+
+    async function exportPoster(format){
+      // Force canvas to render current state before export
+      canvas.renderAll();
+      
+      // Remove everything except Tesco logo
+      removeTopLeftText();
+      
+      // Only add Tesco logo if none exists
+      const existingLogo = canvas.getObjects().find(obj => obj.isDefaultLogo || obj.isBrandLogo);
+      
+      if (!existingLogo) {
+        console.log("Adding Tesco logo for export...");
+        createTescoLogo();
+      }
+    
+    // Generate high-quality data URL
+    let dataUrl = canvas.toDataURL({
+      format: format,
+      quality: format === "jpeg" ? 0.98 : 1.0,
+      multiplier: 3,
+      enableRetinaScaling: true,
+      width: canvas.width * 3,
+      height: canvas.height * 3,
+      left: 0,
+      top: 0
+    });
+    
+    // Create download with professional filename
+    const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `tesco-poster-${timestamp}.${format}`;
+    a.click();
+  }
+    
+    // Hook up controls and finalize
+    function hookControls() {
+      // Initialize all controls
+      if (typeof updateCanvasInfo === 'function') {
+        updateCanvasInfo();
+      }
+    }
+
+// New functions for preview panel and changes tracking
+let previewCanvas;
+let changesHistory = [];
+
+function initPreviewPanel() {
+  console.log("Initializing preview panel...");
+  
+  // Wait for canvas to be ready and initialize preview
+  setTimeout(() => {
+    if (canvas) {
+      // Ensure Tesco logo is present for preview
+      if (!logoLayer) {
+        console.log("Adding Tesco logo for preview...");
+        const tescoText = new fabric.Text("TESCO", { 
+          fontFamily:"Arial", 
+          fontSize:32, 
+          fill: "#00539f",
+          fontWeight: "bold",
+          left: 0,
+          top: 0
+        });
+        
+        const redAccent = new fabric.Rect({
+          width: tescoText.width * 0.8,
+          height: 4,
+          fill: "#e10600",
+          left: 0,
+          top: tescoText.height + 2
+        });
+        
+        logoLayer = new fabric.Group([tescoText, redAccent], {
+          left:20, 
+          top:20, 
+          selectable:false, 
+          evented:false, 
+          hasControls:false, 
+          lockMovementX:true, 
+          lockMovementY:true,
+          isDefaultLogo: true
+        });
+        canvas.add(logoLayer);
+        canvas.renderAll();
+        console.log("Preview logo added");
+      }
+      
+      canvas.backgroundColor = '#ffffff';
+      canvas.renderAll();
+      updateCanvasInfo();
+      console.log("Preview initialized successfully");
+    }
+  }, 1000);
+}
+
+
+function testCanvas() {
+  console.log("=== TESTING CANVAS ===");
+  if (!canvas) {
+    console.error("Canvas not found!");
+    alert("Canvas not found!");
+    return;
+  }
+  
+  console.log("Canvas found:", canvas);
+  console.log("Canvas size:", canvas.width, "x", canvas.height);
+  console.log("Canvas objects:", canvas.getObjects().length);
+  
+  // Clear and add simple rectangle
+  canvas.clear();
+  canvas.backgroundColor = '#ffffff';
+  
+  const rect = new fabric.Rect({
+    left: 50,
+    top: 50,
+    width: 100,
+    height: 100,
+    fill: '#ff0000'
+  });
+  
+  canvas.add(rect);
+  canvas.renderAll();
+  
+  console.log("Red rectangle added");
+    console.log("Preview updated");
+}
+
+function forceImageTest() {
+  console.log("=== FORCE IMAGE TEST ===");
+  if (!canvas) {
+    console.error("Canvas not available!");
+    return;
+  }
+  
+  // Clear canvas
+  canvas.clear();
+  canvas.backgroundColor = '#ffffff';
+  
+  // Add a simple test image using a data URL
+  const testImageData = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2UxMDYwMCIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1zaXplPSIyMCIgZmlsbD0id2hpdGUiPjx0c3Bhbj5UZXN0IEltYWdlPC90c3Bhbj48L3RleHQ+PC9zdmc+';
+  
+  fabric.Image.fromURL(testImageData, (img) => {
+    img.set({
+      left: 100,
+      top: 100,
+      selectable: true
+    });
+    canvas.add(img);
+    canvas.renderAll();
+    console.log("Test image added to canvas");
+  }, { crossOrigin: 'anonymous' });
+}
+
+function addChangeToLog(description) {
+  const now = new Date();
+  const timeString = now.toLocaleTimeString();
+  
+  const changeItem = {
+    time: timeString,
+    description: description
+  };
+  
+  changesHistory.unshift(changeItem);
+  if (changesHistory.length > 10) {
+    changesHistory.pop();
+  }
+  
+  updateChangesLog();
+}
+
+function updateChangesLog() {
+  const changesList = document.getElementById('changesList');
+  if (!changesList) return;
+  changesList.innerHTML = '';
+  
+  changesHistory.forEach(change => {
+    const changeDiv = document.createElement('div');
+    changeDiv.className = 'change-item';
+    changeDiv.innerHTML = `
+      <span class="change-time">${change.time}</span>
+      <span class="change-desc">${change.description}</span>
+    `;
+    changesList.appendChild(changeDiv);
+  });
+}
+
+function updateCanvasInfo() {
+  if (!canvas) return;
+  
+  const sizeEl = document.getElementById('canvasSize');
+  const ratioEl = document.getElementById('canvasRatio');
+  const objectEl = document.getElementById('objectCount');
+  const bgEl = document.getElementById('bgColorInfo');
+  
+  if (sizeEl) sizeEl.textContent = `${canvas.width}×${canvas.height}`;
+  if (ratioEl) {
+    const ratio = getRatioFromDimensions(canvas.width, canvas.height);
+    ratioEl.textContent = ratio;
+  }
+  if (objectEl) {
+    const objectCount = canvas.getObjects().length;
+    objectEl.textContent = objectCount;
+  }
+  if (bgEl) {
+    const bgColor = canvas.backgroundColor || '#ffffff';
+    const colorName = getColorName(bgColor);
+    bgEl.textContent = colorName;
+  }
+}
+
+function getRatioFromDimensions(width, height) {
+  const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+  const divisor = gcd(width, height);
+  return `${width/divisor}:${height/divisor}`;
+}
+
+function getColorName(hex) {
+  const colors = {
+    '#ffffff': 'White',
+    '#000000': 'Black',
+    '#374151': 'Dark Grey',
+    '#e10600': 'Tesco Red',
+    '#00539f': 'Tesco Blue',
+    '#00a650': 'Tesco Green',
+    '#f2f2f2': 'Light Grey',
+    '#e5e5e5': 'Mid Grey',
+    '#d1d5db': 'Stone Grey',
+    '#eef3f7': 'Pale Blue',
+    '#eef6f1': 'Pale Green',
+    '#fef3e2': 'Pale Yellow',
+    '#fce7f3': 'Pale Pink',
+    '#f3e8ff': 'Pale Purple',
+    '#e0f2fe': 'Sky Blue'
+  };
+  return colors[hex.toLowerCase()] || hex;
+}
+
+// Override existing functions to include preview updates
+</script>
+</body>
+</html>
